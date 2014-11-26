@@ -34,8 +34,7 @@ PyObject *cross(PyObject *self, PyObject *args)
     return nullptr;
 
   // Ensure o1 and 2 are the right types.
-  if (!PyType_IsSubtype(o1->ob_type, &PyVec::type) ||
-      !PyType_IsSubtype(o2->ob_type, &PyVec::type))
+  if (!PyVec::type.IsSubtype(o1) || !PyVec::type.IsSubtype(o2))
     return nullptr;
   
   Vec &v = ((PyVec *) o1)->get(), &w = ((PyVec *) o2)->get();
@@ -43,10 +42,9 @@ PyObject *cross(PyObject *self, PyObject *args)
   float j = v.z*w.x - v.x*w.z;
   float k = v.x*w.y - v.y*w.x;
 
-  PyObject *ret = PyVec::type.tp_new(&PyVec::type, nullptr, nullptr);
-
+  // >>> vec.Vec(i,j,k)
   PyObject *val = Py::BuildValue(i, j, k);
-  init_vec((PyVec *) ret, val, nullptr);
+  PyObject *ret = PyVec::make(val);
   Py_DECREF(val);
 
   return ret;

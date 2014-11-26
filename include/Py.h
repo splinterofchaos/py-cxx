@@ -77,10 +77,27 @@ void Register(reprfunc &proc, F f)
   proc = (reprfunc) f;
 }
 
+struct Type : PyTypeObject {
+  Type(PyTypeObject ty)
+    : PyTypeObject(std::move(ty))
+  {
+  }
+
+  bool IsSubtype(PyTypeObject *ty)
+  {
+    return PyType_IsSubtype(ty, this);
+  }
+
+  bool IsSubtype(PyObject *o)
+  {
+    return IsSubtype(o->ob_type);
+  }
+};
+
 template<typename T>
 struct Extention : PyObject
 {
-  static PyTypeObject type;
+  static Type type;
 
   T ext;
 
@@ -89,6 +106,13 @@ struct Extention : PyObject
 
   T       *ptr()       & { return &this->ext; }
   const T *ptr() const & { return &this->ext; }
+
+  static PyObject *make(PyObject *args=nullptr, PyObject *kwds=nullptr)
+  {
+    PyObject *o = type.tp_new(&type, args, kwds);
+    if (o) type.tp_init(o, args, kwds);
+    return o;
+  }
 };
 
 template<typename T,
@@ -115,7 +139,7 @@ auto default_new() {
 }
 
 template<typename T>
-PyTypeObject Extention<T>::type = {
+Type Extention<T>::type((PyTypeObject) {
   PyObject_HEAD_INIT(NULL)
   0,                         // ob_size
   0,                         // tp_name
@@ -158,7 +182,7 @@ PyTypeObject Extention<T>::type = {
   0,                         // tp_init 
   0,                         // tp_alloc 
   default_new<T>(),          // tp_new
-};
+});
 
 }  // namespace py
 
