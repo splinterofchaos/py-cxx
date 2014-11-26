@@ -1,0 +1,76 @@
+
+#include <Python.h>
+
+#include "Py.h"
+#include "Tuple.h"
+#include "String.h"
+
+struct Vec {
+  float x, y, z;
+};
+
+using PyVec = Py::Extention<Vec>;
+
+int init_vec(PyVec *self, PyObject *args, PyObject *)
+{
+  Vec &v = self->get();
+  if (!Py::ParseTuple(args, v.x, v.y, v.z))
+    return -1;
+  return 0;
+}
+
+PyObject *vec_str(PyVec *self)
+{
+  return Py::String("<"  + std::to_string(self->get().x) +
+                    ", " + std::to_string(self->get().y) +
+                    ", " + std::to_string(self->get().z) +
+                    ">").release();
+}
+
+PyObject *cross(PyObject *self, PyObject *args)
+{
+  PyObject *o1, *o2;
+  if (!Py::ParseTuple(args, o1, o2))
+    return nullptr;
+
+  // Ensure o1 and 2 are the right types.
+  if (!PyType_IsSubtype(o1->ob_type, &PyVec::type) ||
+      !PyType_IsSubtype(o2->ob_type, &PyVec::type))
+    return nullptr;
+  
+  Vec &v = ((PyVec *) o1)->get(), &w = ((PyVec *) o2)->get();
+  float i = v.y*w.z - v.z*w.y;
+  float j = v.z*w.x - v.x*w.z;
+  float k = v.x*w.y - v.y*w.x;
+
+  PyObject *ret = PyVec::type.tp_new(&PyVec::type, nullptr, nullptr);
+
+  PyObject *val = Py::BuildValue(i, j, k);
+  init_vec((PyVec *) ret, val, nullptr);
+  Py_DECREF(val);
+
+  return ret;
+}
+
+static PyMethodDef vecMethods[] = {
+  Py::MethodDef("cross", "Returns the cross product of two 3D vectors.", cross),
+  {NULL, NULL, 0, NULL}
+};
+
+PyMODINIT_FUNC initvec()
+{
+  PyVec::type.tp_name = "vec.Vec";
+  Py::Register(PyVec::type.tp_init, init_vec);
+  Py::Register(PyVec::type.tp_str, vec_str);
+  Py::Register(PyVec::type.tp_repr, vec_str);
+  if (PyType_Ready(&PyVec::type) < 0)
+    return;
+
+  PyObject *m = Py_InitModule("vec", vecMethods);
+  if (!m)
+    return;
+
+  Py_INCREF(&PyVec::type);
+  PyModule_AddObject(m, "Vec", (PyObject *) &PyVec::type);
+}
+
