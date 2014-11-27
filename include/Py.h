@@ -9,6 +9,61 @@
 
 namespace Py {
 
+
+struct Object
+{
+  PyObject *o;
+
+  Object() {
+    o = nullptr;
+  }
+
+  explicit Object(PyObject *o, bool own=false) noexcept
+    : o(o)
+  {
+    if (!own)
+      incref();
+  }
+
+  explicit Object(Object& obj) noexcept
+    : Object(obj.o)
+  {
+  }
+
+  explicit Object(Object&& obj) noexcept
+    : Object(obj.release())
+  {
+  }
+
+  ~Object() noexcept
+  {
+    decref();
+  }
+
+  void incref() noexcept
+  {
+    Py_XINCREF(o);
+  }
+
+  void decref() noexcept
+  {
+    Py_XDECREF(o);
+  }
+
+  PyObject *release() noexcept
+  {
+    PyObject *tmp = o;
+    o = nullptr;
+    return tmp;
+  }
+
+  /// For simplicity with Python API.
+  operator PyObject * () noexcept
+  {
+    return o;
+  }
+};
+
 template<typename R, typename...X>
 constexpr int arity(R(*)(X...)) {
   return sizeof...(X);
