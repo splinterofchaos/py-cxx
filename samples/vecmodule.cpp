@@ -24,7 +24,7 @@ PyObject *vec_str(PyVec *self)
   return Py::String("<"  + std::to_string(self->get().x) +
                     ", " + std::to_string(self->get().y) +
                     ", " + std::to_string(self->get().z) +
-                    ">").release();
+                    ">");
 }
 
 PyObject *cross(PyObject *self, PyObject *args)

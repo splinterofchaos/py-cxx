@@ -58,9 +58,14 @@ struct Object
   }
 
   /// For simplicity with Python API.
-  operator PyObject * () noexcept
+  operator PyObject * () & noexcept
   {
     return o;
+  }
+
+  operator PyObject * () && noexcept
+  {
+    return release();
   }
 };
 

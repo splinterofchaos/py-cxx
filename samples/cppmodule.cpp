@@ -42,7 +42,7 @@ PyObject *int_str(PyObject *self)
     s += std::to_string(x);
   }
 
-  return Py::String("[" + s + "]").release();
+  return Py::String("[" + s + "]");
 }
 
 
