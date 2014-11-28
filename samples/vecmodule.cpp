@@ -9,7 +9,15 @@ struct Vec {
   float x, y, z;
 };
 
-using PyVec = Py::Extention<Vec>;
+constexpr Vec operator+ (const Vec &a, const Vec &b) {
+  return {a.x + b.x, a.y + b.y, a.z + b.z};
+}
+
+constexpr Vec operator- (const Vec &a, const Vec &b) {
+  return {a.x - b.x, a.y - b.y, a.z - b.z};
+}
+
+using PyVec = Py::NumExtention<Vec>;
 
 int init_vec(PyVec *self, PyObject *args, PyObject *)
 {
@@ -61,6 +69,7 @@ PyMODINIT_FUNC initvec()
   Py::Register(PyVec::type.tp_init, init_vec);
   Py::Register(PyVec::type.tp_str, vec_str);
   Py::Register(PyVec::type.tp_repr, vec_str);
+  PyVec::type.tp_as_number = &PyVec::numMethods;
   if (PyType_Ready(&PyVec::type) < 0)
     return;
 

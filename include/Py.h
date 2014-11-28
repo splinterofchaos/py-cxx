@@ -3,6 +3,8 @@
 #define PY_H
 
 #include <Python.h>
+
+#include <cstddef>
 #include <type_traits>
 #include <utility>
 #include <string>
@@ -173,6 +175,18 @@ struct Extention : PyObject
     if (o) type.tp_init(o, args, kwds);
     return o;
   }
+
+  /// Overload of `make(args, kwds)`, safe only if `make(NULL, NULL)` is safe.
+  static PyObject *make(T x) noexcept
+  {
+    PyObject *o = type.tp_new(&type, nullptr, nullptr);
+    if (o) new (((Extention *)o)->ptr()) T(std::move(x));
+    return o;
+  }
+
+  /// Convenience casts.
+  operator       T& ()       { return get(); }
+  operator const T& () const { return get(); }
 };
 
 template<typename T,
@@ -243,6 +257,97 @@ Type Extention<T>::type((PyTypeObject) {
   0,                         // tp_alloc 
   default_new<T>(),          // tp_new
 });
+
+template<typename T>
+struct NumExtention : Extention<T>
+{
+  static PyNumberMethods numMethods;
+};
+
+/// Default definitions of binary operators.
+///
+/// The default for when the type has the operator, `sym`bol, uses `int` and
+/// `float` for otherwise, so the `int` version is always preferred, when
+/// available.
+#define DEFAULT_BIN(sym, op)                                                   \
+  template<typename T,                                                         \
+           typename = std::enable_if_t<                                        \
+              std::is_same<T, std::decay_t<                                    \
+                decltype(std::declval<T>() sym std::declval<T>())              \
+              >>::value>                                                       \
+           >                                                                   \
+  auto default_##op(int)                                                       \
+  {                                                                            \
+    return [](PyObject *a, PyObject *b) {                                      \
+      using Num = NumExtention<T>;                                             \
+      return Num::make(((Num *) a)->get() sym ((Num *) b)->get());             \
+    };                                                                         \
+  }                                                                            \
+                                                                               \
+  template<typename T>                                                         \
+  std::nullptr_t default_##op(float) {                                         \
+    return nullptr;                                                            \
+  }                                                                            \
+
+DEFAULT_BIN(+,  plus);
+DEFAULT_BIN(-,  subtract);
+DEFAULT_BIN(*,  multiply);
+DEFAULT_BIN(/,  divide);
+DEFAULT_BIN(%,  modulus);
+DEFAULT_BIN(^,  xor);
+
+// TODO: These should have an in-place function.
+DEFAULT_BIN(&&, and);
+DEFAULT_BIN(||, or);
+
+// TODO: Logical operators.
+
+template<typename T>
+PyNumberMethods NumExtention<T>::numMethods = {
+  default_plus<T>(0),         // nb_add
+  default_subtract<T>(0),     // nb_subtract
+  default_multiply<T>(0),     // nb_multiply;
+  default_divide<T>(0),       // nb_divide;
+  default_modulus<T>(0),      // nb_remainder;
+  nullptr,                    // nb_divmod;
+  nullptr,                    // nb_power;
+  nullptr,                    // nb_negative;
+  nullptr,                    // nb_positive;
+  nullptr,                    // nb_absolute;
+  nullptr,                    // nb_nonzero;
+  nullptr,                    // nb_invert;
+  nullptr,                    // nb_lshift;
+  nullptr,                    // nb_rshift;
+  default_and<T>(0),          // nb_and;
+  default_xor<T>(0),          // nb_xor;
+  default_or<T>(0),           // nb_or;
+  nullptr,                    // nb_coerce;
+  nullptr,                    // nb_int;
+  nullptr,                    // nb_long;
+  nullptr,                    // nb_float;
+  nullptr,                    // nb_oct;
+  nullptr,                    // nb_hex;
+
+  nullptr,                    // nb_inplace_add;
+  nullptr,                    // nb_inplace_subtract;
+  nullptr,                    // nb_inplace_multiply;
+  nullptr,                    // nb_inplace_divide;
+  nullptr,                    // nb_inplace_remainder;
+  nullptr,                    // nb_inplace_power;
+  nullptr,                    // nb_inplace_lshift;
+  nullptr,                    // nb_inplace_rshift;
+  nullptr,                    // nb_inplace_and;
+  nullptr,                    // nb_inplace_xor;
+  nullptr,                    // nb_inplace_or;
+
+  nullptr,                    // nb_floor_divide;
+  nullptr,                    // nb_true_divide;
+  nullptr,                    // nb_inplace_floor_divide;
+  nullptr,                    // nb_inplace_true_divide;
+
+  nullptr                     // nb_index;
+};
+
 
 }  // namespace py
 
