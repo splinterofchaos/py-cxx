@@ -5,6 +5,28 @@
 #include "Tuple.h"
 #include "String.h"
 
+/// This module is roughly equivalent to the following Python code:
+///
+/// class Vec:
+///   def __init__(self, x, y, z):
+///     self.x = x
+///     self.y = y
+///     self.z = z
+///
+///   def __add__(self, other):
+///     return Vec(x+other.x, y+other.y, z+other.z)
+///
+///   def __sub__(self, other):
+///     return Vec(x-other.x, y-other.y, z-other.z)
+///
+///   # dot product
+///   def __mul__(self, other):
+///     return x*other.x + y*other.y + z*other.z
+///
+///   # cross product
+///   def __xor__(self, other):
+///     ...
+
 struct Vec {
   float x, y, z;
 };
@@ -15,6 +37,16 @@ constexpr Vec operator+ (const Vec &a, const Vec &b) {
 
 constexpr Vec operator- (const Vec &a, const Vec &b) {
   return {a.x - b.x, a.y - b.y, a.z - b.z};
+}
+
+constexpr float operator* (const Vec &a, const Vec &b) {
+  return a.x*b.x + a.y*b.y + a.z*b.z;
+}
+
+constexpr Vec operator^ (const Vec &a, const Vec &b) {
+  return { a.y*b.z - a.z*b.y,
+           a.z*b.x - a.x*b.z,
+           a.x*b.y - a.y*b.x };
 }
 
 using PyVec = Py::NumExtention<Vec>;
@@ -59,7 +91,6 @@ PyObject *cross(PyObject *self, PyObject *args)
 }
 
 static PyMethodDef vecMethods[] = {
-  Py::MethodDef("cross", "Returns the cross product of two 3D vectors.", cross),
   {NULL, NULL, 0, NULL}
 };
 

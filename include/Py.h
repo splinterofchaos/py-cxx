@@ -289,7 +289,7 @@ struct NumExtention : Extention<T>
 /// Default definitions of binary operators.
 ///
 /// The default for when the type has the operator, `sym`bol, uses `int` and
-/// `float` for otherwise, so the `int` version is always preferred, when
+/// `...` for otherwise, so the `int` version is always preferred, when
 /// available.
 #define DEFAULT_BIN(sym, op)                                                   \
   template<typename T,                                                         \
@@ -306,8 +306,23 @@ struct NumExtention : Extention<T>
     };                                                                         \
   }                                                                            \
                                                                                \
+  /* For if the result can construct an Object... */                           \
+  template<typename T,                                                         \
+           typename = std::enable_if_t<                                        \
+              std::is_constructible<Object,                                    \
+                decltype(std::declval<T>() sym std::declval<T>())              \
+              >::value>                                                        \
+           >                                                                   \
+  binaryfunc default_##op(int)                                                 \
+  {                                                                            \
+    return [](PyObject *a, PyObject *b) -> PyObject * {                        \
+      using Num = NumExtention<T>;                                             \
+      return Object(((Num *) a)->get() sym ((Num *) b)->get());                \
+    };                                                                         \
+  }                                                                            \
+                                                                               \
   template<typename T>                                                         \
-  std::nullptr_t default_##op(float) {                                         \
+  std::nullptr_t default_##op(...) {                                           \
     return nullptr;                                                            \
   }                                                                            \
 
