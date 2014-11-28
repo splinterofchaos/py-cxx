@@ -318,9 +318,10 @@ DEFAULT_BIN(/,  divide);
 DEFAULT_BIN(%,  modulus);
 DEFAULT_BIN(^,  xor);
 
-// TODO: These should have an in-place function.
 DEFAULT_BIN(&&, and);
 DEFAULT_BIN(||, or);
+
+#undef DEFAULT_BIN
 
 // TODO: Logical operators.
 
