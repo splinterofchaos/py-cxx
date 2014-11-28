@@ -332,7 +332,8 @@ DEFAULT_BIN(*,  multiply);
 DEFAULT_BIN(/,  divide);
 DEFAULT_BIN(%,  modulus);
 DEFAULT_BIN(^,  xor);
-
+DEFAULT_BIN(<<, lshift);
+DEFAULT_BIN(>>, rshift);
 DEFAULT_BIN(&&, and);
 DEFAULT_BIN(||, or);
 
@@ -354,8 +355,8 @@ PyNumberMethods NumExtention<T>::numMethods = {
   nullptr,                    // nb_absolute;
   nullptr,                    // nb_nonzero;
   nullptr,                    // nb_invert;
-  nullptr,                    // nb_lshift;
-  nullptr,                    // nb_rshift;
+  default_lshift<T>(0),       // nb_lshift;
+  default_rshift<T>(0),       // nb_rshift;
   default_and<T>(0),          // nb_and;
   default_xor<T>(0),          // nb_xor;
   default_or<T>(0),           // nb_or;
