@@ -361,6 +361,22 @@ struct NumExtention : Extention<T>
     return nullptr;                                                            \
   }                                                                            \
 
+template<typename T, typename U>
+auto default_conversion(int) 
+  -> decltype(static_cast<U>(std::declval<T>()), unaryfunc())
+{
+  return [](PyObject *o) -> PyObject * {
+    using Num = NumExtention<T>;
+    return Object(static_cast<U>(((Num *) o)->get()));
+  };
+}
+
+template<typename T, typename U>
+std::nullptr_t default_conversion(...) {
+  return nullptr;
+}
+
+
 DEFAULT_BIN(+,  plus);
 DEFAULT_BIN(-,  subtract);
 DEFAULT_BIN(*,  multiply);
@@ -405,7 +421,7 @@ PyNumberMethods NumExtention<T>::numMethods = {
   default_negative<T>(0),     // nb_negative;
   default_positive<T>(0),     // nb_positive;
   nullptr,                    // nb_absolute;
-  nullptr,                    // nb_nonzero;
+  default_conversion<T, bool>(0),  // nb_nonzero;
   default_invert<T>(0),       // nb_invert;
   default_lshift<T>(0),       // nb_lshift;
   default_rshift<T>(0),       // nb_rshift;
@@ -413,9 +429,9 @@ PyNumberMethods NumExtention<T>::numMethods = {
   default_xor<T>(0),          // nb_xor;
   default_or<T>(0),           // nb_or;
   nullptr,                    // nb_coerce;
-  nullptr,                    // nb_int;
-  nullptr,                    // nb_long;
-  nullptr,                    // nb_float;
+  default_conversion<T, long>(0),       // nb_int;
+  default_conversion<T, long long>(0),  // nb_long;
+  default_conversion<T, double>(0),     // nb_float;
   nullptr,                    // nb_oct;
   nullptr,                    // nb_hex;
 
