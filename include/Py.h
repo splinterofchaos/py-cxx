@@ -326,6 +326,41 @@ struct NumExtention : Extention<T>
     return nullptr;                                                            \
   }                                                                            \
 
+/// In-place binary operators.
+#define DEFAULT_IBIN(sym, op)                                                  \
+  template<typename T>                                                         \
+  auto default_##op(int)                                                       \
+   -> decltype(std::declval<T>() sym std::declval<T>(), binaryfunc())          \
+  {                                                                            \
+    return [](PyObject *a, PyObject *b) {                                      \
+      using Num = NumExtention<T>;                                             \
+      ((Num *) a)->get() sym ((Num *) b)->get();                               \
+      return a;                                                                \
+    };                                                                         \
+  }                                                                            \
+                                                                               \
+  template<typename T>                                                         \
+  std::nullptr_t default_##op(...) {                                           \
+    return nullptr;                                                            \
+  }                                                                            \
+
+/// In-place binary operators.
+#define DEFAULT_UNARY(sym, op)                                                 \
+  template<typename T>                                                         \
+  auto default_##op(int)                                                       \
+   -> decltype(sym std::declval<T>(), unaryfunc())                             \
+  {                                                                            \
+    return [](PyObject *o) {                                                   \
+      using Num = NumExtention<T>;                                             \
+      return Num::make(sym ((Num *) o)->get());                                \
+    };                                                                         \
+  }                                                                            \
+                                                                               \
+  template<typename T>                                                         \
+  std::nullptr_t default_##op(...) {                                           \
+    return nullptr;                                                            \
+  }                                                                            \
+
 DEFAULT_BIN(+,  plus);
 DEFAULT_BIN(-,  subtract);
 DEFAULT_BIN(*,  multiply);
@@ -337,7 +372,24 @@ DEFAULT_BIN(>>, rshift);
 DEFAULT_BIN(&&, and);
 DEFAULT_BIN(||, or);
 
+DEFAULT_IBIN(+=,  iadd);
+DEFAULT_IBIN(-=,  isubtract);
+DEFAULT_IBIN(*=,  imultiply);
+DEFAULT_IBIN(/=,  idivide);
+DEFAULT_IBIN(%=,  imodulus);
+DEFAULT_IBIN(<<=, ilshift);
+DEFAULT_IBIN(>>=, irshift);
+DEFAULT_IBIN(&=,  iand);
+DEFAULT_IBIN(^=,  ixor);
+DEFAULT_IBIN(|=,  ior);
+
+DEFAULT_UNARY(+, positive);
+DEFAULT_UNARY(-, negative);
+DEFAULT_UNARY(~, invert);
+
 #undef DEFAULT_BIN
+#undef DEFAULT_IBIN
+#undef DEFAULT_UNARY
 
 // TODO: Logical operators.
 
@@ -350,11 +402,11 @@ PyNumberMethods NumExtention<T>::numMethods = {
   default_modulus<T>(0),      // nb_remainder;
   nullptr,                    // nb_divmod;
   nullptr,                    // nb_power;
-  nullptr,                    // nb_negative;
-  nullptr,                    // nb_positive;
+  default_negative<T>(0),     // nb_negative;
+  default_positive<T>(0),     // nb_positive;
   nullptr,                    // nb_absolute;
   nullptr,                    // nb_nonzero;
-  nullptr,                    // nb_invert;
+  default_invert<T>(0),       // nb_invert;
   default_lshift<T>(0),       // nb_lshift;
   default_rshift<T>(0),       // nb_rshift;
   default_and<T>(0),          // nb_and;
@@ -367,17 +419,17 @@ PyNumberMethods NumExtention<T>::numMethods = {
   nullptr,                    // nb_oct;
   nullptr,                    // nb_hex;
 
-  nullptr,                    // nb_inplace_add;
-  nullptr,                    // nb_inplace_subtract;
-  nullptr,                    // nb_inplace_multiply;
-  nullptr,                    // nb_inplace_divide;
-  nullptr,                    // nb_inplace_remainder;
+  default_iadd<T>(0),         // nb_inplace_add;
+  default_isubtract<T>(0),    // nb_inplace_subtract;
+  default_imultiply<T>(0),    // nb_inplace_multiply;
+  default_idivide<T>(0),      // nb_inplace_divide;
+  default_imodulus<T>(0),     // nb_inplace_remainder;
   nullptr,                    // nb_inplace_power;
-  nullptr,                    // nb_inplace_lshift;
-  nullptr,                    // nb_inplace_rshift;
-  nullptr,                    // nb_inplace_and;
-  nullptr,                    // nb_inplace_xor;
-  nullptr,                    // nb_inplace_or;
+  default_ilshift<T>(0),      // nb_inplace_lshift;
+  default_irshift<T>(0),      // nb_inplace_rshift;
+  default_iand<T>(0),         // nb_inplace_and;
+  default_ixor<T>(0),         // nb_inplace_xor;
+  default_ior<T>(0),          // nb_inplace_or;
 
   nullptr,                    // nb_floor_divide;
   nullptr,                    // nb_true_divide;

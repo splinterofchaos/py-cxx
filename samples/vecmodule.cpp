@@ -13,11 +13,27 @@
 ///     self.y = y
 ///     self.z = z
 ///
+///   def __negative__(self):
+///     return Vec(-x, -y, -z)
+///
+///   def __positive__(self):
+///     return self
+///
 ///   def __add__(self, other):
 ///     return Vec(x+other.x, y+other.y, z+other.z)
 ///
 ///   def __sub__(self, other):
 ///     return Vec(x-other.x, y-other.y, z-other.z)
+///
+///   def __iadd__(self, other):
+///     x += other.x
+///     y += other.y
+///     z += other.z
+///
+///   def __isub__(self, other):
+///     x -= other.x
+///     y -= other.y
+///     z -= other.z
 ///
 ///   # dot product
 ///   def __mul__(self, other):
@@ -30,6 +46,32 @@
 struct Vec {
   float x, y, z;
 };
+
+constexpr Vec operator- (const Vec &v) {
+  return {-v.x, -v.y, -v.z};
+}
+
+constexpr Vec &operator+ (Vec &v) {
+  return v;
+}
+
+constexpr const Vec &operator+ (const Vec &v) {
+  return v;
+}
+
+Vec &operator+= (Vec &a, const Vec &b) {
+  a.x += b.x;
+  a.y += b.y;
+  a.z += b.z;
+  return a;
+}
+
+Vec &operator-= (Vec &a, const Vec &b) {
+  a.x -= b.x;
+  a.y -= b.y;
+  a.z -= b.z;
+  return a;
+}
 
 constexpr Vec operator+ (const Vec &a, const Vec &b) {
   return {a.x + b.x, a.y + b.y, a.z + b.z};
