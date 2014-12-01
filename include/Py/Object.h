@@ -88,6 +88,20 @@ struct Object
   }
 };
 
+constexpr struct {
+  template<typename X>
+  Object operator() (X &&x) const {
+    return Object(std::forward<X>(x));
+  }
+} object{};
+
+constexpr struct {
+  template<typename X>
+  PyObject * operator() (X &&x) const {
+    return Object(std::forward<X>(x));
+  }
+} object_ptr{};
+
 }  // namespace py
 
 #endif  // PYXX_OBJECT_H
