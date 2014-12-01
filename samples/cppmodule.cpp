@@ -48,8 +48,10 @@ PyObject *int_str(PyObject *self)
 
 PyObject *primes(PyObject *, PyObject *)
 {
-  std::vector<int> v{1,3,5,7};
-  return Py::List(v);
+  std::vector<int> v{1,3,5};
+  Py::List l(v);
+  l.push_back(7);
+  return std::move(l);
 }
 
 static PyMethodDef cppMethods[] = {
