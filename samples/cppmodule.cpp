@@ -7,9 +7,9 @@
 #include <iostream>
 #include <iterator>
 
-#include "Py.h"
-#include "String.h"
-#include "Tuple.h"
+#include "Py/Py.h"
+#include "Py/String.h"
+#include "Py/Tuple.h"
 
 static PyObject *cppError;
 

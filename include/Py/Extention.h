@@ -1,165 +1,12 @@
 
-#ifndef PY_H
-#define PY_H
+#ifndef PYXX_EXTENTION_H
+#define PYXX_EXTENTION_H
 
 #include <Python.h>
 
-#include <cstddef>
-#include <type_traits>
-#include <utility>
-#include <string>
-#include <complex>
+#include "Py/Object.h"
 
 namespace Py {
-
-
-struct Object
-{
-  PyObject *o;
-
-  Object() {
-    o = nullptr;
-  }
-
-  explicit Object(PyObject *o, bool own=false) noexcept : o(o) {
-    if (!own)
-      incref();
-  }
-
-  explicit Object(Object& obj)  noexcept : Object(obj.o) { }
-  explicit Object(Object&& obj) noexcept : Object(obj.release(), true) { }
-  explicit Object(bool b)       noexcept : Object(b ? Py_True : Py_False) { }
-
-  // Strings
-  explicit Object(const char *s) noexcept { o = PyString_FromString(s); }
-  explicit Object(const std::string &s) noexcept : Object(s.c_str()) { }
-  explicit Object(const char *s, Py_ssize_t size) noexcept {
-    o = PyString_FromStringAndSize(s, size);
-  }
-  explicit Object(const std::string &s, Py_ssize_t size) noexcept
-    : Object(s.c_str(), size) {
-  }
-
-  // Unicode
-  explicit Object(const Py_UNICODE *s, Py_ssize_t size) noexcept {
-    o = PyUnicode_FromUnicode(s, size);
-  }
-
-  // Python numbers
-  Object(size_t x)             noexcept { o = PyInt_FromSize_t(x); }
-  Object(Py_ssize_t x)         noexcept { o = PyInt_FromSsize_t(x); }
-  Object(long long x)          noexcept { o = PyLong_FromLongLong(x); }
-  Object(unsigned long long x) noexcept { o = PyLong_FromUnsignedLongLong(x); }
-  Object(double x)             noexcept { o = PyFloat_FromDouble(x); }
-
-  // PyComplex
-  Object(double x, double y)   noexcept { o = PyComplex_FromDoubles(x, y); }
-  Object(Py_complex c)         noexcept { o = PyComplex_FromCComplex(c); }
-  template<typename T>
-  Object(const std::complex<T> &c)
-    : Object(std::real(c), std::imag(c)) {
-  }
-
-  ~Object() noexcept {
-    decref();
-  }
-
-  void incref() noexcept
-  {
-    Py_XINCREF(o);
-  }
-
-  void decref() noexcept
-  {
-    Py_XDECREF(o);
-  }
-
-  PyObject *release() noexcept
-  {
-    PyObject *tmp = o;
-    o = nullptr;
-    return tmp;
-  }
-
-  /// For simplicity with Python API.
-  operator PyObject * () & noexcept
-  {
-    return o;
-  }
-
-  operator PyObject * () && noexcept
-  {
-    return release();
-  }
-};
-
-template<typename R, typename...X>
-constexpr int arity(R(*)(X...)) {
-  return sizeof...(X);
-}
-
-template<typename R, typename...X>
-constexpr bool returns_PyObject(R(*)(X...)) {
-  // Value is either a PyObject, or a subclass of one.
-  return std::is_convertible<R, PyObject *>::value;
-}
-
-template<typename R, typename...X>
-constexpr bool is_PyCFunction(R(*)(X...)) {
-  return false;
-}
-
-template<>
-constexpr bool is_PyCFunction(PyCFunction) {
-  return true;
-}
-
-template<typename F>
-constexpr int MethodType(F f) {
-  return arity(f) == 3     ? METH_KEYWORDS
-       : is_PyCFunction(f) ? METH_VARARGS
-                           : METH_O;
-}
-
-template<typename F>
-constexpr PyMethodDef MethodDef(const char *name, const char *doc,
-                                 int type, F f)
-{
-  static_assert(arity(F()) == 2 || arity(F()) == 3,
-                "Methods must have an arity of 2 or 3");
-  static_assert(returns_PyObject(F()), "Methods must return a PyObject *.");
-  return {name, (PyCFunction)f, type, doc};
-}
-
-template<typename F>
-constexpr PyMethodDef MethodDef(const char *name, const char *doc, const F f)
-{
-  return MethodDef(name, doc, MethodType(f), f);
-}
-
-template<typename R, typename X, typename...Y>
-constexpr bool is_object_method(R(*)(X, Y...))
-{
-  return std::is_convertible<X, PyObject *>::value;
-}
-
-template<typename F>
-void Register(initproc &proc, F f)
-{
-  static_assert(arity(F()) == 3, "__init__ must have an arity of 2 or 3");
-  static_assert(is_object_method(F()),
-                "First argument must be PyObject-compatible.");
-  proc = (initproc) f;
-}
-
-template<typename F>
-void Register(reprfunc &proc, F f)
-{
-  static_assert(arity(F()) == 1, "__str/repr__ must have an arity of 1");
-  static_assert(is_object_method(F()),
-                "First argument must be PyObject-compatible.");
-  proc = (reprfunc) f;
-}
 
 struct Type : PyTypeObject {
   Type(PyTypeObject ty)
@@ -455,7 +302,6 @@ PyNumberMethods NumExtention<T>::numMethods = {
   nullptr                     // nb_index;
 };
 
-
 }  // namespace py
 
-#endif  // PY_H
+#endif  // PYXX_EXTENTION_H

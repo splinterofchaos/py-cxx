@@ -1,7 +1,12 @@
 
+#ifndef PYXX_STRING_H
+#define PYXX_STRING_H
+
 #include <Python.h>
 
 #include <sstream>
+
+#include "Py/Object.h"
 
 namespace Py {
 
@@ -65,3 +70,5 @@ String format(const char *fmt, Args*...args)
 }
 
 } // namespace py
+
+#endif  // PYXX_STRING_H

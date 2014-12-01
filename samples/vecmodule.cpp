@@ -1,9 +1,9 @@
 
 #include <Python.h>
 
-#include "Py.h"
-#include "Tuple.h"
-#include "String.h"
+#include "Py/Py.h"
+#include "Py/Tuple.h"
+#include "Py/String.h"
 
 /// This module is roughly equivalent to the following Python code:
 ///

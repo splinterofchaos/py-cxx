@@ -1,6 +1,6 @@
 
-#ifndef PY_TUPLE_H
-#define PY_TUPLE_H
+#ifndef PYXX_TUPLE_H
+#define PYXX_TUPLE_H
 
 #include <Python.h>
 
@@ -195,4 +195,4 @@ PyObject *BuildValue(Args &...as) {
 
 }  // namespace py
 
-#endif  // PY_TUPLE_H
+#endif  // PYXX_TUPLE_H

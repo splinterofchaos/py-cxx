@@ -1,7 +1,7 @@
 
 #include <Python.h>
 
-#include "Py.h"
+#include "Py/Py.h"
 
 PyObject *count(PyObject *self, PyObject *args)
 {
