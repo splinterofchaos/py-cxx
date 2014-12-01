@@ -39,17 +39,19 @@ struct Object
   }
 
   // Python numbers
-  Object(size_t x)             noexcept { o = PyInt_FromSize_t(x); }
-  Object(Py_ssize_t x)         noexcept { o = PyInt_FromSsize_t(x); }
-  Object(long long x)          noexcept { o = PyLong_FromLongLong(x); }
-  Object(unsigned long long x) noexcept { o = PyLong_FromUnsignedLongLong(x); }
-  Object(double x)             noexcept { o = PyFloat_FromDouble(x); }
+  explicit Object(size_t x)             noexcept { o = PyInt_FromSize_t(x); }
+  explicit Object(Py_ssize_t x)         noexcept { o = PyInt_FromSsize_t(x); }
+  explicit Object(int x)                noexcept { o = PyInt_FromLong(x); }
+  explicit Object(long long x)          noexcept { o = PyLong_FromLongLong(x); }
+  explicit Object(unsigned long long x) noexcept { o = PyLong_FromUnsignedLongLong(x); }
+  explicit Object(double x)             noexcept { o = PyFloat_FromDouble(x); }
 
   // PyComplex
-  Object(double x, double y)   noexcept { o = PyComplex_FromDoubles(x, y); }
-  Object(Py_complex c)         noexcept { o = PyComplex_FromCComplex(c); }
+  explicit Object(float x, float y)     noexcept { o = PyComplex_FromDoubles(x, y); }
+  explicit Object(double x, double y)   noexcept { o = PyComplex_FromDoubles(x, y); }
+  explicit Object(Py_complex c)         noexcept { o = PyComplex_FromCComplex(c); }
   template<typename T>
-  Object(const std::complex<T> &c)
+  explicit Object(const std::complex<T> &c)
     : Object(std::real(c), std::imag(c)) {
   }
 
