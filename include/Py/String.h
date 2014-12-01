@@ -32,12 +32,12 @@ struct String : Object
 
   Py_ssize_t size() const noexcept
   {
-    return PyString_Size(o);
+    return PyString_Size(self);
   }
 
   const char *c_str() const noexcept
   {
-    return PyString_AsString(o);
+    return PyString_AsString(self);
   }
 
   const char *begin() const noexcept
@@ -52,13 +52,13 @@ struct String : Object
 
   String & operator += (String &s) noexcept
   {
-    PyString_Concat(&o, s);
+    PyString_Concat(&self, s);
     return *this;
   }
 
   String & operator += (String &&s) noexcept
   {
-    PyString_ConcatAndDel(&o, s.release());
+    PyString_ConcatAndDel(&self, s.release());
     return *this;
   }
 };

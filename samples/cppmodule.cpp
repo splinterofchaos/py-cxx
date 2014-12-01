@@ -10,6 +10,7 @@
 #include "Py/Py.h"
 #include "Py/String.h"
 #include "Py/Tuple.h"
+#include "Py/List.h"
 
 static PyObject *cppError;
 
@@ -45,10 +46,15 @@ PyObject *int_str(PyObject *self)
   return Py::String("[" + s + "]");
 }
 
+PyObject *primes(PyObject *, PyObject *)
+{
+  std::vector<int> v{1,3,5,7};
+  return Py::List(v);
+}
 
 static PyMethodDef cppMethods[] = {
-  //{"make_int",  make_int, METH_VARARGS,
-  //  "..."},
+  {"primes",  primes, METH_VARARGS,
+   "prime numbers under ten: "},
   {NULL, NULL, 0, NULL}
 };
 
